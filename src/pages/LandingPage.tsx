@@ -122,7 +122,7 @@ export default function LandingPage() {
             onClick={() => navigate("/editor")}
             className="bg-gold text-background hover:bg-gold-light font-display text-lg px-10 py-6 tracking-wider shadow-[0_0_30px_hsl(43_52%_54%/0.3)] hover:shadow-[0_0_50px_hsl(43_52%_54%/0.5)] transition-all duration-300"
           >
-            Открыть редактор
+            Начать
           </Button>
         </motion.div>
 

@@ -56,9 +56,14 @@ export default function EditorToolbar({ projectName }: { projectName?: string })
   return (
     <div className="h-10 bg-surface border-b border-border flex items-center px-2 gap-1 shrink-0">
       {/* Logo */}
-      <span className="font-display text-sm text-gradient-gold mr-2 select-none tracking-wider">
-        {projectName || "OpenSpace"}
+      <span className="font-display text-sm text-gradient-gold mr-1 select-none tracking-wider">
+        Olympus
       </span>
+      {projectName && (
+        <span className="text-[10px] text-muted-foreground border-l border-border pl-2 mr-1 font-mono truncate max-w-[120px]">
+          {projectName}
+        </span>
+      )}
 
       {/* Menu */}
       <Menubar className="border-none bg-transparent h-8">
