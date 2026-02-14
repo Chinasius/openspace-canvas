@@ -8,15 +8,33 @@ function CanvasElement({ el }: { el: EditorElement }) {
   const isSelected = state.selectedIds.includes(el.id);
   const [dragging, setDragging] = useState(false);
   const [resizing, setResizing] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const editRef = useRef<HTMLInputElement>(null);
   const dragStart = useRef({ x: 0, y: 0, elX: 0, elY: 0 });
   const resizeStart = useRef({ x: 0, y: 0, w: 0, h: 0 });
 
+  const hasTextContent = ["Button", "TextBlock", "CheckBox", "RadioButton"].includes(el.type);
+
   const handleMouseDown = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (editing) return;
     dispatch({ type: "SELECT", ids: e.shiftKey ? [...state.selectedIds, el.id] : [el.id] });
     if (el.locked) return;
     setDragging(true);
     dragStart.current = { x: e.clientX, y: e.clientY, elX: el.x, elY: el.y };
+  };
+
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (hasTextContent && !el.locked) {
+      setEditing(true);
+      setTimeout(() => editRef.current?.focus(), 0);
+    }
+  };
+
+  const commitEdit = (value: string) => {
+    dispatch({ type: "UPDATE_ELEMENT", id: el.id, updates: { props: { ...el.props, content: value } } });
+    setEditing(false);
   };
 
   const handleMouseMove = useCallback(
@@ -53,14 +71,28 @@ function CanvasElement({ el }: { el: EditorElement }) {
 
   if (!el.visible) return null;
 
-  
-
   const handleResizeStart = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
     setResizing(true);
     resizeStart.current = { x: e.clientX, y: e.clientY, w: el.width, h: el.height };
   };
+
+  const renderInlineEdit = () => (
+    <input
+      ref={editRef}
+      defaultValue={el.props.content || ""}
+      onBlur={(e) => commitEdit(e.target.value)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") commitEdit((e.target as HTMLInputElement).value);
+        if (e.key === "Escape") setEditing(false);
+      }}
+      className="w-full h-full bg-transparent border border-gold/50 outline-none text-foreground px-1"
+      style={{ fontSize: el.props.fontSize ? `${el.props.fontSize}px` : "12px" }}
+      onClick={(e) => e.stopPropagation()}
+      onMouseDown={(e) => e.stopPropagation()}
+    />
+  );
 
   const renderContent = () => {
     const style: React.CSSProperties = {
@@ -70,6 +102,8 @@ function CanvasElement({ el }: { el: EditorElement }) {
       ...(el.props.foreground ? { color: el.props.foreground } : {}),
       ...(el.props.fontSize ? { fontSize: `${el.props.fontSize}px` } : {}),
     };
+
+    if (editing && hasTextContent) return renderInlineEdit();
 
     switch (el.type) {
       case "Window":
@@ -93,7 +127,7 @@ function CanvasElement({ el }: { el: EditorElement }) {
           </button>
         );
       case "TextBlock":
-        return <p className="text-xs text-foreground" style={style}>{el.props.content || "TextBlock"}</p>;
+        return <p className="text-xs text-foreground cursor-text" style={style}>{el.props.content || "TextBlock"}</p>;
       case "TextBox":
         return <div className="w-full h-full border border-[#444] bg-[#1a1a1a] rounded px-2 flex items-center text-xs text-[#888]" style={style}>TextBox</div>;
       case "CheckBox":
@@ -166,7 +200,11 @@ function CanvasElement({ el }: { el: EditorElement }) {
 
   return (
     <div
-      className={cn("absolute cursor-move", isSelected && "ring-1 ring-gold/60")}
+      className={cn(
+        "absolute transition-shadow duration-150",
+        isSelected && "ring-1 ring-gold/60 shadow-[0_0_12px_hsl(43_52%_54%/0.15)]",
+        !editing && "cursor-move"
+      )}
       style={{
         left: el.x,
         top: el.y,
@@ -175,6 +213,7 @@ function CanvasElement({ el }: { el: EditorElement }) {
         zIndex: el.zIndex,
       }}
       onMouseDown={handleMouseDown}
+      onDoubleClick={handleDoubleClick}
     >
       {renderContent()}
       {/* Resize handle */}

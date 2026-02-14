@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/menubar";
 import { elementsToXaml, xamlToElements } from "@/lib/xaml-engine";
 
-export default function EditorToolbar() {
+export default function EditorToolbar({ projectName }: { projectName?: string }) {
   const { state, dispatch, addElement } = useEditor();
 
   const tools: { id: typeof state.activeTool; icon: any; label: string }[] = [
@@ -57,7 +57,7 @@ export default function EditorToolbar() {
     <div className="h-10 bg-surface border-b border-border flex items-center px-2 gap-1 shrink-0">
       {/* Logo */}
       <span className="font-display text-sm text-gradient-gold mr-2 select-none tracking-wider">
-        OpenSpace
+        {projectName || "OpenSpace"}
       </span>
 
       {/* Menu */}
